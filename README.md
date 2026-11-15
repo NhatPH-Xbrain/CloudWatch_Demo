@@ -44,6 +44,7 @@ VPC xora-test-vpc (1 public subnet + internet gateway)
 | `scripts/chaos.ps1` | Gây lỗi trên EC2 qua SSM |
 | `scripts/smoke-test.ps1` | Kiểm tra nhanh đường CloudWatch → SNS → Xora |
 | `scripts/watch-alarms.ps1` | Theo dõi trạng thái alarm theo thời gian thực |
+| `docs/demo-script.md` | Kịch bản quay video demo (khoảng 1 phút 30 giây) |
 
 ## 1. Chuẩn bị (Windows)
 
