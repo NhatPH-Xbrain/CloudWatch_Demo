@@ -11,7 +11,7 @@ Mỗi lỗi đều được cố ý gây ra và có nguyên nhân gốc đã bi�
 ```
 VPC xora-test-vpc (1 public subnet + internet gateway)
 └─ EC2 t3.micro (Amazon Linux 2023)
-    ├─ demo-app (python :8080, /health, /error) ──log──► /xora-test/demo-app ─metric filter─► XoraTest/AppErrorCount
+    ├─ demo-app (python :8080, /health, /error) ──log──► xora-test-app ─metric filter─► XoraTest/AppErrorCount
     ├─ CloudWatch Agent ──► CWAgent mem_used_percent, disk_used_percent
     ├─ health timer     ──► XoraTest/AppHealthy (1/0 mỗi phút)
     └─ /opt/chaos/chaos.sh (gây lỗi có chủ đích, điều khiển qua SSM)
@@ -172,10 +172,10 @@ Chạy trong thư mục `scripts\`. **Chạy `-Scenario stop` và đợi mọi a
 |---|---|---|---|---|
 | **UC0 Smoke** | `.\smoke-test.ps1` (hoặc `-Mode RawPublish`) | cpu-high bị ép sang ALARM | Không áp dụng: chỉ cần alert tới nơi | Bản tin SNS |
 | **UC1 CPU tăng vọt** | `.\chaos.ps1 -Scenario cpu` | cpu-high | CPU bị một process chạy mất kiểm soát (`stress-ng`) chiếm hết, không phải do traffic | CPUUtilization ~100 % |
-| **UC2 Lỗi ứng dụng** | `.\chaos.ps1 -Scenario errors` | app-errors | demo-app không kết nối được database (`db connection refused host=orders-db`) | Các dòng ERROR trong `/xora-test/demo-app` |
+| **UC2 Lỗi ứng dụng** | `.\chaos.ps1 -Scenario errors` | app-errors | demo-app không kết nối được database (`db connection refused host=orders-db`) | Các dòng ERROR trong log group `xora-test-app` |
 | **UC3 Đầy ổ đĩa** | `.\chaos.ps1 -Scenario disk` | disk-high | Ổ root bị lấp đầy bởi một file lớn (`/var/tmp/xora-fill.bin`) | disk_used_percent nhảy lên ~92 % |
 | **UC4 Bộ nhớ** | `.\chaos.ps1 -Scenario memory` | mem-high | Một process chiếm phần lớn RAM | mem_used_percent > 80 % |
-| **UC5 Dịch vụ ngừng** | `.\chaos.ps1 -Scenario service-down` | app-down | demo-app bị dừng; host vẫn khoẻ (CPU, status check bình thường) | AppHealthy = 0, status check OK |
+| **UC5 Dịch vụ ngừng** | `.\chaos.ps1 -Scenario service-down` | app-down | demo-app bị dừng từ bên ngoài (`systemctl stop`), không phải crash; host vẫn khoẻ | AppHealthy = 0; log `received SIGTERM` và `result=success` trong log group `xora-test-app`; CPU, memory, status check bình thường |
 | **UC6 Tương quan** | `.\chaos.ps1 -Scenario correlated` | cpu-high + app-errors | Gom nhóm: hai alert có nằm trong **một** incident không? RCA cần tách được hai nguyên nhân (hoặc giải thích mối liên hệ) | Cả hai metric |
 | **UC7 Phục hồi** | `.\chaos.ps1 -Scenario stop` sau bất kỳ UC nào | Thông báo OK | Incident được cập nhật hoặc đóng khi có OK | Bản tin OK |
 | **UC8 Dao động** | `.\chaos.ps1 -Scenario flap` (≈36 phút) | cpu-high ALARM→OK ×3 | Loại bỏ trùng lặp, chỉ một incident thay vì ba | Các lần chuyển trạng thái lặp lại |

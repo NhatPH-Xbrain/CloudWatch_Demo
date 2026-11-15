@@ -1,5 +1,6 @@
+# Named after the service so Xora finds it: for an alert with service=<name>, Xora queries the log group <name>.
 resource "aws_cloudwatch_log_group" "app" {
-  name              = "/${var.name_prefix}/demo-app"
+  name              = var.service_name
   retention_in_days = 3
 }
 

@@ -12,6 +12,8 @@ touch /var/log/demo-app.log
 # ---------------------------------------------------------------- demo app
 cat > /opt/demo-app/app.py <<'EOF'
 import logging
+import signal
+import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 logging.basicConfig(
@@ -43,6 +45,14 @@ class Handler(BaseHTTPRequestHandler):
         pass
 
 
+def _on_sigterm(signum, frame):
+    # Leave evidence in the log: without this, a stop leaves no trace after "starting".
+    log.error("received SIGTERM, shutting down: stopped externally (e.g. systemctl stop), not a crash")
+    sys.exit(0)
+
+
+signal.signal(signal.SIGTERM, _on_sigterm)
+
 log.info("demo-app starting on :8080")
 ThreadingHTTPServer(("0.0.0.0", 8080), Handler).serve_forever()
 EOF
@@ -54,6 +64,8 @@ After=network-online.target
 
 [Service]
 ExecStart=/usr/bin/python3 /opt/demo-app/app.py
+# Record how the unit ended ($$ and %% are systemd escapes for a literal $ and %).
+ExecStopPost=/bin/sh -c 'echo "$(date -u "+%%F %%T,000") ERROR demo-app systemd unit demo-app.service is down: result=$$SERVICE_RESULT exit_code=$$EXIT_CODE exit_status=$$EXIT_STATUS" >> /var/log/demo-app.log'
 Restart=on-failure
 RestartSec=5
 
