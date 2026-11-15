@@ -63,3 +63,9 @@ variable "detailed_monitoring" {
   type        = bool
   default     = false
 }
+
+variable "service_name" {
+  description = "Fixed service name used as the CloudWatch dimension of the demo alarm (app-down), so the service shown in Xora does not change when the EC2 instance is replaced."
+  type        = string
+  default     = "xora-test-app"
+}

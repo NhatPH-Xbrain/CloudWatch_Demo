@@ -30,3 +30,8 @@ output "log_group" {
 output "ssm_session_command" {
   value = "aws ssm start-session --region ${var.region} --target ${aws_instance.app.id}"
 }
+
+output "service_name" {
+  description = "Service value Xora shows for the demo alarm (xora-test-app-down). Use it in the Xora incident rule."
+  value       = var.service_name
+}

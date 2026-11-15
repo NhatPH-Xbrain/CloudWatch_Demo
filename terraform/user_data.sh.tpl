@@ -63,13 +63,12 @@ EOF
 
 # ---------------------------------------------- app health -> custom metric
 # Publishes XoraTest/AppHealthy (1 = up, 0 = down) every minute.
+# Dimension Service=<fixed name> (not InstanceId) so Xora's "service" stays the same when the EC2 is replaced.
 cat > /opt/chaos/health-metric.sh <<'EOF'
 #!/bin/bash
-TOKEN=$(curl -s -X PUT http://169.254.169.254/latest/api/token -H "X-aws-ec2-metadata-token-ttl-seconds: 300")
-IID=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-id)
 if curl -sf -m 5 http://localhost:8080/health > /dev/null; then V=1; else V=0; fi
 aws cloudwatch put-metric-data --region ${region} --namespace XoraTest \
-  --metric-name AppHealthy --dimensions InstanceId=$IID --value $V
+  --metric-name AppHealthy --dimensions Service=${service_name} --value $V
 EOF
 
 cat > /etc/systemd/system/health-metric.service <<'EOF'

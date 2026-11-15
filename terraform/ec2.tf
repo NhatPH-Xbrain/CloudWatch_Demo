@@ -27,7 +27,8 @@ resource "aws_instance" "app" {
 
   user_data = templatefile("${path.module}/user_data.sh.tpl", {
     region    = var.region
-    log_group = aws_cloudwatch_log_group.app.name
+    log_group    = aws_cloudwatch_log_group.app.name
+    service_name = var.service_name
   })
   user_data_replace_on_change = true
 

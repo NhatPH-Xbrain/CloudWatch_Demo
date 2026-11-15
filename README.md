@@ -28,7 +28,7 @@ VPC xora-test-vpc (1 public subnet + internet gateway)
 | `xora-test-app-errors` | XoraTest/AppErrorCount | ≥ 5 dòng log ERROR / phút |
 | `xora-test-disk-high` | CWAgent disk_used_percent (/) | > 85 % trong 2 phút |
 | `xora-test-mem-high` | CWAgent mem_used_percent | > 80 % trong 2 phút |
-| `xora-test-app-down` | XoraTest/AppHealthy | < 1 trong 2 phút |
+| `xora-test-app-down` | XoraTest/AppHealthy (dimension `Service=xora-test-app`) | < 1 trong 2 phút |
 | `xora-test-status-check` | AWS/EC2 StatusCheckFailed_Instance | ≥ 1 trong 2 phút (chỉ kích hoạt khi host/OS có sự cố thật) |
 
 ## Cấu trúc thư mục
@@ -139,7 +139,32 @@ Sau khi lưu connector:
 
 > **Tuỳ chọn:** nếu muốn gửi thẳng tới một webhook URL thay vì để Xora tự subscribe, đặt `xora_webhook_url = "https://..."` trong `terraform.tfvars`. Nếu subscription kẹt ở *Pending confirmation*, đặt thêm `xora_endpoint_auto_confirms = false`.
 
-## 5. Các kịch bản kiểm thử
+## 5. Tạo incident rule trong Xora
+
+Xora lấy trường **Service** của alert CloudWatch từ dimension của alarm. Các alarm EC2 dùng `InstanceId`, nên Service sẽ đổi mỗi khi EC2 bị tạo lại. Riêng alarm demo `xora-test-app-down` dùng dimension cố định `Service = xora-test-app` (biến `service_name`), nên rule dưới đây không phải sửa khi chạy lại `terraform apply`.
+
+| Trường | Giá trị |
+|---|---|
+| Rule name | `CloudWatch demo - app down` |
+| Trigger | At least **1** alerts matching **any** conditions |
+| Time window | **20 min** |
+| Group by | `service` |
+| Environment | **DEV** |
+| Priority | `5` |
+| Condition key | `cw` |
+| Condition description | `demo-app trên lab CloudWatch ngừng chạy` |
+| Filter 1 | **Provider** · is equal · `CLOUDWATCH` |
+| Filter 2 | **Service** · is equal · `xora-test-app` |
+
+CEL tương ứng:
+
+```
+provider.isEqual("CLOUDWATCH") && service.isEqual("xora-test-app")
+```
+
+Kiểm tra: `.\scripts\chaos.ps1 -Scenario service-down` (lỗi thật, alarm sau khoảng 2–3 phút) hoặc `.\scripts\smoke-test.ps1 -AlarmName xora-test-app-down` (ép trạng thái ngay). Khôi phục bằng `.\scripts\chaos.ps1 -Scenario stop`.
+
+## 6. Các kịch bản kiểm thử
 
 Chạy trong thư mục `scripts\`. **Chạy `-Scenario stop` và đợi mọi alarm về OK trước khi sang kịch bản tiếp theo.** Mỗi lần chạy chaos được ghi vào `results/timeline.csv` để đo thời gian alert tới Xora.
 
@@ -161,7 +186,7 @@ Kiểm tra an toàn bổ sung (tuỳ chọn):
 - **UC10 Người duyệt:** xác nhận không RCA nào được coi là chấp nhận khi chưa có người duyệt.
 - **UC11 Payload sai:** chạy `.\smoke-test.ps1 -Mode RawPublish` với nội dung đã sửa. Xora cần từ chối hoặc bỏ qua một cách gọn gàng.
 
-## 6. Ghi kết quả
+## 7. Ghi kết quả
 
 Chép bảng sau vào `results/results.md` và điền cho từng UC:
 
@@ -169,7 +194,7 @@ Chép bảng sau vào `results/results.md` và điền cho từng UC:
 |---|---|---|---|---|---|---|---|
 | UC1 | | | | | | | |
 
-## 7. Dọn dẹp (đừng bỏ qua)
+## 8. Dọn dẹp (đừng bỏ qua)
 
 ```powershell
 .\scripts\chaos.ps1 -Scenario stop

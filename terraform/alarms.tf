@@ -77,10 +77,10 @@ resource "aws_cloudwatch_metric_alarm" "mem_high" {
 # while the instance is still booting; a dead instance is covered by A6.
 resource "aws_cloudwatch_metric_alarm" "app_down" {
   alarm_name          = "${var.name_prefix}-app-down"
-  alarm_description   = "demo-app /health check failing on ${local.instance_id} (XoraTest/AppHealthy < 1)."
+  alarm_description   = "demo-app /health check failing on service ${var.service_name} (XoraTest/AppHealthy < 1)."
   namespace           = "XoraTest"
   metric_name         = "AppHealthy"
-  dimensions          = { InstanceId = local.instance_id }
+  dimensions          = { Service = var.service_name } # fixed name -> stable "service" in Xora
   statistic           = "Minimum"
   period              = 60
   evaluation_periods  = 2
