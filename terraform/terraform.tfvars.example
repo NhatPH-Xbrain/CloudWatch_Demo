@@ -1,0 +1,15 @@
+# Copy to terraform.tfvars and fill in. Do not commit terraform.tfvars.
+
+# --- Xora connector, "Assume role" tab ---
+xora_external_id           = "<External ID from the Xora connector UI>"
+xora_gateway_principal_arn = "arn:aws:iam::098640806013:role/techx-xora-dev-xora-gateway"
+# xora_permissions_policy_json = <<-EOT
+#   { ...paste the "Permissions policy" JSON from the Xora UI here... }
+# EOT
+
+# --- Optional: subscribe a Xora webhook URL to SNS directly (not needed with assume role) ---
+# xora_webhook_url            = "https://<your-xora-resolve-cloudwatch-webhook>"
+# xora_endpoint_auto_confirms = true
+
+# my_ip_cidr                = "203.0.113.10/32"   # optional: browse the demo app on :8080
+# detailed_monitoring       = true                # 1-minute CPU alarm (~USD 2/month)
